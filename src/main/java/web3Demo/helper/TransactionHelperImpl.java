@@ -4,42 +4,31 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.web3j.abi.FunctionEncoder;
-import org.web3j.abi.FunctionReturnDecoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Function;
-import org.web3j.crypto.Credentials;
-import org.web3j.crypto.RawTransaction;
 import org.web3j.protocol.Web3j;
-import org.web3j.protocol.admin.Admin;
-import org.web3j.protocol.admin.methods.response.PersonalUnlockAccount;
 import org.web3j.protocol.core.DefaultBlockParameterName;
-import org.web3j.protocol.core.Ethereum;
+import org.web3j.protocol.core.RemoteCall;
 import org.web3j.protocol.core.methods.request.Transaction;
-import org.web3j.protocol.core.methods.response.EthCall;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
+import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
-import org.web3j.protocol.http.HttpService;
 import org.web3j.tx.ClientTransactionManager;
-import org.web3j.tx.TransactionManager;
 import org.web3j.tx.Transfer;
-import org.web3j.utils.Convert;
 import org.web3j.utils.Convert.Unit;
 
-import web3Demo.model.ContractQueryRequest;
+import web3Demo.Hello_World;
+import web3Demo.model.ContractTransactionRequest;
 import web3Demo.model.EtherTransactionRequest;
 import org.web3j.abi.datatypes.Type;
-import org.web3j.abi.datatypes.Uint;
 
 @Component
 public class TransactionHelperImpl implements TransactionHelper {
@@ -63,21 +52,94 @@ public class TransactionHelperImpl implements TransactionHelper {
 	}
 
 	@Override
-	public String queryContract(ContractQueryRequest contractRequest) throws InterruptedException, ExecutionException {
+	public String queryContract(ContractTransactionRequest contractTransactionRequest) throws Exception {
+
+		//TODO unlock account first
+		if (!accountHelper.unlockAccount(contractTransactionRequest.getFromAddress())){
+			return null;
+		}
 		
-		Function function = new Function(
-	             contractRequest.getFunctionName(),  // function we're calling
-	             Arrays.<Type>asList(),  // Parameters to pass as Solidity Types
-	             Collections.<TypeReference<?>>emptyList());
+		ClientTransactionManager transactionManager = new ClientTransactionManager(web3j,contractTransactionRequest.getFromAddress());
+		
+		Hello_World contractHelloWorld = Hello_World.load(
+				contractTransactionRequest.getContractAddress(), 
+				web3j, 
+				transactionManager, 
+				contractTransactionRequest.getGasPrice(), 
+				contractTransactionRequest.getGasLimit());
+		
+		RemoteCall<BigInteger> getCounter = contractHelloWorld.getCounter();
+		
+		BigInteger counterValue = getCounter.send();
+		
+		return counterValue.toString();
+	}
+
+	@Override
+	public TransactionReceipt sendContractTransaction(ContractTransactionRequest contractTransactionRequest) throws Exception {
+		
+		if (!accountHelper.unlockAccount(contractTransactionRequest.getFromAddress())){
+			return null;
+		}
+		
+		ClientTransactionManager transactionManager = new ClientTransactionManager(web3j,contractTransactionRequest.getFromAddress());
+
+		Hello_World contractHelloWorld = Hello_World.load(
+				contractTransactionRequest.getContractAddress(), 
+				web3j, 
+				transactionManager, 
+				contractTransactionRequest.getGasPrice(), 
+				contractTransactionRequest.getGasLimit());
+		
+		TransactionReceipt receipt = contractHelloWorld.add().send();
+		
+		return receipt;
+		
+		/*
+		
+		
+		
+		
+		
+		
+		
+		Function function = new Function(contractTransactionRequest.getFunctionName(), 
+				Arrays.<Type>asList(), // Parameters to pass as Solidity Types
+				Collections.<TypeReference<?>>emptyList());
 		
 		String encodedFunction = FunctionEncoder.encode(function);
-
-		EthCall response = web3j
-				.ethCall(Transaction.createEthCallTransaction(null, contractRequest.getAddress(), encodedFunction),
-						DefaultBlockParameterName.LATEST)
-				.sendAsync().get();
 		
-		return FunctionReturnDecoder.decodeIndexedValue(response.getValue(), new TypeReference<Uint>(){}).getValue().toString();
+		Transaction transaction = Transaction.createFunctionCallTransaction(
+				contractTransactionRequest.getFromAddress(),
+				getNonce(contractTransactionRequest.getFromAddress()),
+				contractTransactionRequest.getGasPrice(),
+				contractTransactionRequest.getGasLimit(),
+				contractTransactionRequest.getContractAddress(),
+				contractTransactionRequest.getFunds(),
+				encodedFunction );
+		
+		//org.web3j.protocol.core.methods.request.Transaction.createFunctionCallTransaction(String from, BigInteger nonce, BigInteger gasPrice, BigInteger gasLimit, String to, BigInteger value, String data)
+		
+		EthSendTransaction transactionResponse = web3j.ethSendTransaction(transaction).sendAsync().get();
+
+		String transactionHash = transactionResponse.getTransactionHash();
+
+	// wait for response using EthGetTransactionReceipt...
+		
+		
+		EthGetTransactionReceipt transactionReceipt = web3j.ethGetTransactionReceipt(transactionHash).sendAsync().get();
+		
+		
+		
+		
+		
+		return transactionReceipt; */
+	}
+	
+	private BigInteger getNonce(String address) throws InterruptedException, ExecutionException {
+		EthGetTransactionCount ethGetTransactionCount = web3j
+				.ethGetTransactionCount(address, DefaultBlockParameterName.LATEST).sendAsync().get();
+		return ethGetTransactionCount.getTransactionCount();
 	}
 
 }
