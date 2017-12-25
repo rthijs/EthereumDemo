@@ -17,7 +17,7 @@ public interface TransactionHelper {
 	public TransactionReceipt sendEtherTransaction(EtherTransactionRequest transactionRequest)
 			throws IOException, InterruptedException, TransactionException, ExecutionException;
 	
-	public String queryContract(ContractTransactionRequest contractTransactionRequest) throws InterruptedException, ExecutionException, Exception;
+	public BigInteger queryContract(ContractTransactionRequest contractTransactionRequest) throws InterruptedException, ExecutionException, Exception;
 
 	public TransactionReceipt sendContractTransaction(ContractTransactionRequest contractTransactionRequest) throws InterruptedException, ExecutionException, Exception;
 }

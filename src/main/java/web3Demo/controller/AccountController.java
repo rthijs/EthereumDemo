@@ -13,13 +13,13 @@ import web3Demo.service.Web3Service;
 
 @RestController
 public class AccountController {
-	
+
 	@Autowired
 	Web3Service web3service;
-    
-    @RequestMapping("/accounts")
-    public List<Account> listAccounts() throws InterruptedException, ExecutionException {
-    	return web3service.getAccounts();
-    }
-    
+
+	@RequestMapping("/accounts")
+	public List<Account> listAccounts() throws InterruptedException, ExecutionException {
+		return web3service.getAccounts();
+	}
+
 }

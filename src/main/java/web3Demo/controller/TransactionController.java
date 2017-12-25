@@ -1,6 +1,7 @@
 package web3Demo.controller;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.concurrent.ExecutionException;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,12 +11,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.protocol.exceptions.TransactionException;
 
 import web3Demo.helper.TransactionHelper;
-import web3Demo.model.ContractQueryRequest;
 import web3Demo.model.ContractTransactionRequest;
 import web3Demo.model.EtherTransactionRequest;
 
@@ -40,16 +39,15 @@ public class TransactionController {
 	}
 
 	@PostMapping("/transaction/queryContract")
-	public @ResponseBody ResponseEntity<String> queryContract(@RequestBody ContractTransactionRequest contractTransactionRequest)
+	public @ResponseBody ResponseEntity<BigInteger> queryContract(@RequestBody ContractTransactionRequest contractTransactionRequest)
 			throws Exception {
 
 		System.out.println("from address = " + contractTransactionRequest.getFromAddress());
 		System.out.println("Contract address = " + contractTransactionRequest.getContractAddress());
-		System.out.println("function = " + contractTransactionRequest.getFunctionName());
 
-		String receipt = transactionHelper.queryContract(contractTransactionRequest);
+		BigInteger result = transactionHelper.queryContract(contractTransactionRequest);
 
-		return new ResponseEntity<String>(receipt, HttpStatus.OK);
+		return new ResponseEntity<BigInteger>(result, HttpStatus.OK);
 
 	}
 
@@ -57,7 +55,6 @@ public class TransactionController {
 	public @ResponseBody ResponseEntity<TransactionReceipt> contractTransaction(
 			@RequestBody ContractTransactionRequest contractTransactionRequest) throws Exception {
 		
-		System.out.println("functionName = " + contractTransactionRequest.getFunctionName());
 		System.out.println("contractAddress = " + contractTransactionRequest.getContractAddress());
 		System.out.println("fromAddress = " + contractTransactionRequest.getFromAddress());
 		System.out.println("gasPrice = " + contractTransactionRequest.getGasPrice());

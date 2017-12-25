@@ -4,8 +4,6 @@ import java.math.BigInteger;
 
 public class ContractTransactionRequest {
 
-	private String functionName;
-	
 	private String contractAddress;
 	
 	private String fromAddress;
@@ -15,14 +13,6 @@ public class ContractTransactionRequest {
 	private BigInteger gasLimit;
 	
 	private BigInteger funds;
-
-	public String getFunctionName() {
-		return functionName;
-	}
-
-	public void setFunctionName(String functionName) {
-		this.functionName = functionName;
-	}
 
 	public String getContractAddress() {
 		return contractAddress;
